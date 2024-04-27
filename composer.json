@@ -1,20 +1,20 @@
 {
-  "name": "zoujingli/think-library",
+  "name": "baolong/think-library",
   "license": "MIT",
   "homepage": "https://thinkadmin.top",
   "description": "Basic Library for ThinkAdmin",
   "authors": [
     {
-      "name": "Anyon",
-      "email": "zoujingli@qq.com"
+      "name": "Baolong",
+      "email": "117384790@qq.com"
     }
   ],
   "support": {
-    "email": "zoujingli@qq.com",
+    "email": "baolong@qq.com",
     "wiki": "https://thinkadmin.top",
     "forum": "https://thinkadmin.top",
-    "source": "https://gitee.com/zoujingli/ThinkLibrary",
-    "issues": "https://gitee.com/zoujingli/ThinkLibrary/issues"
+    "source": "https://gitee.com/baolong/ThinkLibrary",
+    "issues": "https://gitee.com/baolong/ThinkLibrary/issues"
   },
   "require": {
     "php": ">=7.1",
