@@ -1,20 +1,20 @@
 {
-  "name": "baolong/think-library",
+  "name": "zoujingli/think-library",
   "license": "MIT",
   "homepage": "https://thinkadmin.top",
-  "description": "Basic Library for ThinkAdmin",
+  "description": "Library for ThinkAdmin",
   "authors": [
     {
-      "name": "Baolong",
-      "email": "117384790@qq.com"
+      "name": "Anyon",
+      "email": "zoujingli@qq.com"
     }
   ],
   "support": {
-    "email": "baolong@qq.com",
+    "email": "zoujingli@qq.com",
     "wiki": "https://thinkadmin.top",
     "forum": "https://thinkadmin.top",
-    "source": "https://gitee.com/baolong/ThinkLibrary",
-    "issues": "https://gitee.com/baolong/ThinkLibrary/issues"
+    "source": "https://gitee.com/zoujingli/ThinkLibrary",
+    "issues": "https://gitee.com/zoujingli/ThinkLibrary/issues"
   },
   "require": {
     "php": ">=7.1",
@@ -26,6 +26,7 @@
     "ext-openssl": "*",
     "ext-mbstring": "*",
     "symfony/process": "^5.4|^6.0|*",
+    "topthink/think-orm": "^2.0|^3.0",
     "topthink/framework": "^6.0|^8.0|*",
     "topthink/think-migration": "^3.0|*"
   },

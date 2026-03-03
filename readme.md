@@ -1,4 +1,4 @@
-# ThinkLibrary for ThinkPHP6
+# ThinkLibrary for ThinkAdmin
 
 [![Latest Stable Version](https://poser.pugx.org/zoujingli/think-library/v/stable)](https://packagist.org/packages/zoujingli/think-library)
 [![Latest Unstable Version](https://poser.pugx.org/zoujingli/think-library/v/unstable)](https://packagist.org/packages/zoujingli/think-library)
@@ -9,71 +9,91 @@
 [![License](https://thinkadmin.top/static/icon/license-mit.svg)](https://mit-license.org)
 
 **ThinkLibrary** 是一个针对 **ThinkPHP 6 & 8** 的封装库，它提供了完整的 **CRUD**（创建、读取、更新、删除）操作和一系列常用工具。
-该库特别注重多应用支持，为开发者提供便利。前端代码的主仓库位于 **Gitee**，而 **GitHub** 则作为镜像仓库用于发布 **Composer** 包，以方便开发者下载和使用。
+
+## 业务功能特性
+
+**核心架构功能：**
+- **标准控制器基类**: 提供完整的 CRUD 操作封装，包括分页、表单、验证、队列等通用功能
+- **基础模型类**: 实现魔术方法和静态助手调用，支持操作日志记录和数据一致性保障
+- **自定义服务基类**: 提供依赖注入和实例化机制，支持服务的统一管理和扩展
+- **全局函数库**: 包含数据处理、系统配置、HTTP 请求、JWT 认证等实用函数
+- **快捷查询逻辑器**: 提供链式查询构建，简化数据库操作
+- **表单验证机制**: 支持规则别名和自定义验证，确保数据输入安全
+- **异步任务队列**: 支持延时执行和循环任务，提升系统响应性能
+- **CSRF 令牌验证**: 内置表单安全验证，防止跨站请求伪造攻击
+- **高精度计算支持**: 集成 BC Math 高精度数学函数，确保金融计算的准确性
+
+**技术特性：**
+- **PSR-12 标准**: 严格遵循 PHP-FIG 编码规范，确保代码质量和可维护性
+- **模块化设计**: 各功能模块独立封装，便于扩展和维护
+- **高性能优化**: 针对高并发场景进行专门优化，支持缓存和数据库连接池
+- **异常处理完善**: 完善的异常捕获和日志记录机制，便于问题排查
+- **向后兼容**: 保持 API 稳定性，确保平滑升级
+- **数据完整性保障**: 通过数据库约束确保业务数据的一致性和有效性
 
 ## 功能说明
 
-1. 数据列表展示组件
+1. **数据列表展示组件**
 
 * 功能：展示数据列表，支持分页、排序和高级搜索。
 * 优化点：提供友好的用户界面和交互体验，确保数据展示的准确性和实时性。
 * 高级特性：支持多种排序方式、自定义搜索字段和条件。
 
-2. 表单处理模块
+2. **表单处理模块**
 
 * 功能：用于创建、展示和提交表单数据。
 * 优化点：表单验证和错误处理机制，确保数据的有效性和完整性。
 * 高级特性：支持多种表单元素、表单验证规则和动态表单生成。
 
-3. 数据状态快速处理模块
+3. **数据状态快速处理模块**
 
 * 功能：根据业务需求快速更新数据状态。
 * 优化点：提供简洁的接口和操作方式，支持多字段同时更新。
 * 高级特性：支持条件判断和事务处理，确保数据一致性和完整性。
 
-4. 数据安全删除模块
+4. **数据安全删除模块**
 
 * 功能：根据业务需求安全地删除数据。
 * 优化点：提供软删除和硬删除两种方式，确保数据彻底消失或标记为已删除。
 * 高级特性：支持根据条件自动软删除、可配置的软删除标记字段。
 
-5. 文件存储通用组件
+5. **文件存储通用组件**
 
 * 功能：支持多种文件存储方式，包括本地服务存储、云存储等。
 * 优化点：提供统一的接口和配置方式，方便开发者快速集成和使用。
 * 高级特性：支持文件上传、下载、删除和版本控制等功能。
 
-6. 通用数据保存更新模块
+6. **通用数据保存更新模块**
 
 * 功能：根据 key 值及 where 条件判断数据是否存在，进行更新或新增操作。
 * 优化点：提供简洁的接口和操作方式，减少冗余代码和重复工作量。
 * 高级特性：支持乐观锁和悲观锁机制，确保并发控制和数据一致性。
 
-7. 通用网络请求模块
+7. **通用网络请求模块**
 
 * 功能：支持 GET、POST 和 PUT 请求，可配置请求参数、证书等。
 * 优化点：提供统一的接口和配置方式，方便开发者快速发起网络请求。
 * 高级特性：支持请求重试、超时设置、自动捕获异常等功能。
 
-8. 系统参数通用 g-k-v 配置模块
+8. **系统参数通用 g-k-v 配置模块**
 
 * 功能：快速配置系统参数，支持长久化保存。
 * 优化点：提供简洁的接口和操作方式，方便开发者管理和维护系统参数。
 * 高级特性：支持参数加密存储、权限控制和日志记录等功能。
 
-9. UTF8 加密算法支持模块
+9. **UTF8 加密算法支持模块**
 
 * 功能：提供 UTF8 字符串的加密和解密功能。
 * 优化点：确保加密过程的安全性和数据的机密性。
 * 高级特性：支持多种加密算法、密钥管理等功能。
 
-10. 接口 CORS 跨域默认支持模块
+10. **接口 CORS 跨域默认支持模块**
 
 * 功能：默认支持跨域请求，输出标准化 JSON 数据。
 * 优化点：减少开发者的工作量，自动处理跨域问题。
 * 高级特性：支持定制化响应头、跨域请求限制等功能。
 
-11. 表单 CSRF 安全验证模块
+11. **表单 CSRF 安全验证模块**
 
 * 功能：自动为表单添加 CSRF 安全验证字段，防止恶意提交。
 * 优化点：简化开发者的工作流程，提高表单提交的安全性。
@@ -85,7 +105,8 @@
 
 * Gitee 仓库 https://gitee.com/zoujingli/ThinkAdmin
 * Github 仓库 https://github.com/zoujingli/ThinkAdmin
-* 体验地址（账号密码都是admin）https://v6.thinkadmin.top
+* Gitcode 仓库 https://gitcode.com/ThinkAdmin/ThinkAdmin
+* 体验地址 ( 账号密码都是 admin ) https://v6.thinkadmin.top
 
 ## 代码仓库
 
@@ -93,9 +114,12 @@
 
 部分代码来自互联网，若有异议可以联系作者进行删除。
 
-* 在线体验地址：https://v6.thinkadmin.top （账号和密码都是 `admin` ）
+* 在线体验地址：https://v6.thinkadmin.top ( 账号和密码都是 `admin` )
 * **Gitee** 仓库地址：https://gitee.com/zoujingli/ThinkLibrary
 * **Github** 仓库地址：https://github.com/zoujingli/ThinkLibrary
+* **Gitcode** 仓库地址： https://gitcode.com/ThinkAdmin/ThinkLibrary
+
+版权所有 Copyright © 2014-2026 by ThinkAdmin (https://thinkadmin.top) All rights reserved。
 
 ## 使用说明
 
@@ -170,27 +194,28 @@ CREATE TABLE `system_config`
 * 系统任务列队支持需要的数据表
 
 ```sql
-CREATE TABLE `system_queue` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `code` varchar(20) DEFAULT '' COMMENT '任务编号',
-  `title` varchar(50) NOT NULL DEFAULT '' COMMENT '任务名称',
-  `command` varchar(500) DEFAULT '' COMMENT '执行指令',
-  `exec_data` longtext COMMENT '执行参数',
-  `exec_time` bigint(20) unsigned DEFAULT '0' COMMENT '执行时间',
-  `exec_desc` varchar(500) DEFAULT '' COMMENT '状态描述',
-  `enter_time` bigint(20) DEFAULT '0' COMMENT '开始时间',
-  `outer_time` bigint(20) DEFAULT '0' COMMENT '结束时间',
-  `attempts` bigint(20) DEFAULT '0' COMMENT '执行次数',
-  `rscript` tinyint(1) DEFAULT '1' COMMENT '单例模式',
-  `status` tinyint(1) DEFAULT '1' COMMENT '任务状态(1新任务,2处理中,3成功,4失败)',
-  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `idx_system_queue_code` (`code`),
-  KEY `idx_system_queue_title` (`title`) USING BTREE,
-  KEY `idx_system_queue_status` (`status`) USING BTREE,
-  KEY `idx_system_queue_rscript` (`rscript`) USING BTREE,
-  KEY `idx_system_queue_create_at` (`create_at`) USING BTREE,
-  KEY `idx_system_queue_exec_time` (`exec_time`) USING BTREE
+CREATE TABLE `system_queue`
+(
+    `id`         bigint(20) NOT NULL AUTO_INCREMENT,
+    `code`       varchar(20)          DEFAULT '' COMMENT '任务编号',
+    `title`      varchar(50) NOT NULL DEFAULT '' COMMENT '任务名称',
+    `command`    varchar(500)         DEFAULT '' COMMENT '执行指令',
+    `exec_data`  longtext COMMENT '执行参数',
+    `exec_time`  bigint(20) unsigned DEFAULT '0' COMMENT '执行时间',
+    `exec_desc`  varchar(500)         DEFAULT '' COMMENT '状态描述',
+    `enter_time` bigint(20) DEFAULT '0' COMMENT '开始时间',
+    `outer_time` bigint(20) DEFAULT '0' COMMENT '结束时间',
+    `attempts`   bigint(20) DEFAULT '0' COMMENT '执行次数',
+    `rscript`    tinyint(1) DEFAULT '1' COMMENT '单例模式',
+    `status`     tinyint(1) DEFAULT '1' COMMENT '任务状态(1新任务,2处理中,3成功,4失败)',
+    `create_at`  timestamp   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY          `idx_system_queue_code` (`code`),
+    KEY          `idx_system_queue_title` (`title`) USING BTREE,
+    KEY          `idx_system_queue_status` (`status`) USING BTREE,
+    KEY          `idx_system_queue_rscript` (`rscript`) USING BTREE,
+    KEY          `idx_system_queue_create_at` (`create_at`) USING BTREE,
+    KEY          `idx_system_queue_exec_time` (`exec_time`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统-任务';
 ```
 
@@ -394,4 +419,3 @@ $tree = CodeExtend::arr2tree($list);
 
 // 二维数组 转为 扁平数据结构，需要存在 id 及 pid 关系
 $tree = CodeExtend::arr2table($list);
-```
