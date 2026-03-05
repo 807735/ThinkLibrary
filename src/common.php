@@ -35,6 +35,26 @@ use think\db\Query;
 use think\helper\Str;
 use think\Model;
 
+if (!function_exists('pr')) {
+    /**
+     * 打印输出数据到文件
+     * @param mixed $data 输出的数据
+     * @param boolean $new 强制替换文件
+     * @param ?string $file 保存文件名称
+     * @return false|int
+     */
+    function pr()
+    {
+        $args = func_get_args();
+        echo '<pre>';
+        if (count($args) == 1){
+            print_r($args[0]);
+        }else{
+            print_r($args);
+        }
+        echo '</pre>';
+    }
+}
 if (!function_exists('p')) {
     /**
      * 打印输出数据到文件.
