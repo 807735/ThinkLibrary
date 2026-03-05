@@ -74,8 +74,9 @@ class OpenService extends Service
      */
     public function getConfig()
     {
-        $config = sysdata('open');
+        $config = AdminService::getSite('openapi');
         return [
+            'site_id'           => AdminService::getSite('id',0),
             'app_path'          => $config['app_path']??'',
             'app_code'          => $config['app_code']??'',
             'appsecret'         => $config['appsecret']??'',

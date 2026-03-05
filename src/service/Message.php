@@ -64,10 +64,9 @@ abstract class Message
      */
     public static function getScenes(): array
     {
-        $config = sysdata('plugin.common.smscfg')?:[];
+        $config = AdminService::getSite('smscfg',[]);
         $scenes = [];
         foreach (self::$scenes as $k => $v) {
-//            unset($config[$k]['state']);
             $v = array_merge($v, $config[$k] ?? []);
             $scenes[$k] = $v;
         }
@@ -183,6 +182,7 @@ abstract class Message
 
             $db = SystemMsms::mk();
             $db->setAttrs([
+                'site_id' => AdminService::getSite('id',0),
                 'identifier' => $identifier,
                 'scene' => $scene,
                 'title' => $title,

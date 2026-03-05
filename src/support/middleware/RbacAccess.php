@@ -51,6 +51,7 @@ class RbacAccess
      */
     public function handle(Request $request, \Closure $next): Response
     {
+
         // HTTP.LANG 语言包处理
         $langSet = $this->app->lang->getLangSet();
         if (is_file($file = dirname(__DIR__, 2) . "/lang/{$langSet}.php")) {
@@ -62,9 +63,11 @@ class RbacAccess
             $this->app->lang->load($file, $langSet);
         }
 
+        
+
         // 跳过忽略配置应用 或 有权限访问
         $ignore = $this->app->config->get('app.rbac_ignore', []);
-        if (in_array($this->app->http->getName(), $ignore) || AdminService::check()) {
+        if (in_array($this->app->http->getName(), $ignore) ||  AdminService::check() ) {
             return $next($request);
         }
 

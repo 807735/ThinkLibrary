@@ -35,6 +35,33 @@ use think\db\Query;
 use think\helper\Str;
 use think\Model;
 
+if (!function_exists('site')) {
+    /**
+     * @param null|string $name 数据名称
+     * @param null|mixed $value 默认数据
+     * @return null|array|mixed 返回内容
+     * @return void
+     */
+    function site(?string $name = null, $default = null)
+    {
+        return AdminService::getSite($name,$default);
+    }
+}
+
+if (!function_exists('siteSave')) {
+    /**
+     * @param null|string $name 数据名称
+     * @param null|mixed $value 默认数据
+     * @return null|array|mixed 返回内容
+     * @return void
+     */
+   
+    function siteSave(string $name, $value = '')
+    {
+        return AdminService::setSite($name,$value);
+    }
+}
+
 if (!function_exists('pr')) {
     /**
      * 打印输出数据到文件
@@ -55,6 +82,7 @@ if (!function_exists('pr')) {
         echo '</pre>';
     }
 }
+
 if (!function_exists('p')) {
     /**
      * 打印输出数据到文件.

@@ -28,6 +28,7 @@ use think\admin\helper\QueryHelper;
 use think\admin\helper\SaveHelper;
 use think\admin\helper\TokenHelper;
 use think\admin\helper\ValidateHelper;
+use think\admin\service\AdminService;
 use think\admin\service\NodeService;
 use think\admin\service\QueueService;
 use think\App;
@@ -82,6 +83,18 @@ class Controller extends \stdClass
     public $csrf_message;
 
     /**
+     * 初始化站点参数
+     * @var array|null
+     */
+    public $site = [];
+
+    /**
+     * 初始化站点ID
+     * @var int|mixed
+     */
+    public $site_id = 0;
+
+    /**
      * Constructor.
      */
     public function __construct(App $app)
@@ -90,6 +103,10 @@ class Controller extends \stdClass
             $this->error('禁止访问内置方法！');
         }
         $this->get = $app->request->get();
+        // 宝龙-初始化站点
+        $this->site = AdminService::getSite();
+        $this->site_id = $this->site['id']??0;
+
         $this->app = $app->bind('think\admin\Controller', $this);
         $this->node = NodeService::getCurrent();
         $this->request = $this->app->request;

@@ -26,6 +26,7 @@ use think\admin\extend\DataExtend;
 use think\admin\Library;
 use think\admin\model\SystemAuth;
 use think\admin\model\SystemNode;
+use think\admin\model\SystemSite;
 use think\admin\model\SystemUser;
 use think\admin\Service;
 use think\helper\Str;
@@ -173,6 +174,27 @@ class AdminService extends Service
     }
 
     /**
+     * 初始化站点信息
+     * @return void
+     */
+    public static function getSite(?string $field = null, $default = null){
+        $data = [];
+        if (Library::$sapp->session->get('user.usertype') == 'site'){
+            $data = SystemSite::mk()->cache('SystemSite')->where(['id' => Library::$sapp->session->get('user.site_id')])->findOrEmpty()->toArray();
+        }
+        return $field ? ($data[$field]??$default) : $data;
+    }
+
+    /**
+     * 设置站点
+     * @param string $name
+     * @param $value
+     * @return void
+     */
+    public static function setSite(string $name,$value = ''){
+        SystemSite::mk()->master()->where(['id' => Library::$sapp->session->get('user.site_id') ])->findOrEmpty()->save([$name => $value]);
+    }
+    /**
      * 检查指定节点授权
      * --- 需要读取缓存或扫描所有节点.
      */
@@ -191,6 +213,7 @@ class AdminService extends Service
             }
             return true;
         }
+
         // 自定义权限检查方法
         if (function_exists('admin_check_filter')) {
             return call_user_func('admin_check_filter', $current, $methods, $userNodes);
