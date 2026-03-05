@@ -16,55 +16,33 @@
 
 declare (strict_types=1);
 
-namespace think\admin\model;
+namespace think\admin\model; 
 
 /**
  * 账号短信验证模型
  * @class AccountMsms
  * @package app\common\model
  */
-class SystemMsms extends Abs
+class SystemOpenApi extends Abs
 {
- 
-    public function getSendTimeAttr($value): string
-    {
-        return $this->getCreateTimeAttr($value);
-    }
 
-    public function setSendTimeAttr($value): string
-    {
-        return $this->setCreateTimeAttr($value);
-    }
-
-    public function getPlanTimeAttr($value): string
-    {
-        return $this->getCreateTimeAttr($value);
-    }
-
-    public function setPlanTimeAttr($value): string
-    {
-        return $this->setCreateTimeAttr($value);
-    }
-
-
-    public function setParamsAttr($value): string
+    public function setResponseAttr($value): string
     {
         return $this->setExtraAttr($value);
     }
-    public function setResultAttr($value): string
+    public function setRequestAttr($value): string
     {
         return $this->setExtraAttr($value);
     }
 
 
-    public function getParamsAttr($value): array
+    public function getResponseAttr($value): array
     {
         return $this->getExtraAttr($value);
     }
 
-    public function getResultAttr($value): array
+    public function getRequestAttr($value): array
     {
         return $this->getExtraAttr($value);
     }
-
 }
