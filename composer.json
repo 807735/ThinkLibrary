@@ -49,10 +49,7 @@
   "extra": {
     "think": {
       "services": [
-        "think\\admin\\Library",
-        'app\\data\\Service',
-        'app\\service\\Service',
-        'app\\payment\\Service'
+        "think\\admin\\Library"
       ]
     }
   },
