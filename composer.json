@@ -1,4 +1,4 @@
-{
+{https://github.com/807735/ThinkLibrary/blob/master/composer.json
   "name": "baolong/think-library",
   "license": "MIT",
   "homepage": "https://thinkadmin.top",
@@ -50,9 +50,9 @@
     "think": {
       "services": [
         "think\\admin\\Library",
-        'app\\data\\Service',
-        'app\\service\\Service',
-        'app\\payment\\Service'
+        "app\\data\\Service",
+        "app\\service\\Service",
+        "app\\payment\\Service"
       ]
     }
   },
