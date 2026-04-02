@@ -29,6 +29,7 @@ use think\admin\model\SystemNode;
 use think\admin\model\SystemSite;
 use think\admin\model\SystemUser;
 use think\admin\Service;
+use think\exception\HttpResponseException;
 use think\helper\Str;
 use think\Session;
 
@@ -84,6 +85,16 @@ class AdminService extends Service
     }
 
     /**
+     * 是否站点超级管理员
+     * @return void
+     */
+    public static function isSiteSuper():bool{
+        if (self::getUserType() == 'site' && self::getUserId() == self::getSite('user_id',0)){
+            return true;
+        }
+        return false;
+    }
+    /**
      * 获取超级用户账号.
      */
     public static function getSuperName(): string
@@ -105,6 +116,14 @@ class AdminService extends Service
     public static function getUserName(): string
     {
         return Library::$sapp->session->get('user.username', '');
+    }
+
+    /**
+     * 获取后台用户类型.
+     */
+    public static function getUserType(): string
+    {
+        return Library::$sapp->session->get('user.usertype', 'admin')?:'admin';
     }
 
     /**
@@ -134,7 +153,11 @@ class AdminService extends Service
      */
     public static function getUserTheme(): string
     {
-        $default = sysconf('base.site_theme|raw') ?: 'default';
+        if (self::getUserType() == 'admin'){
+            $default = sysconf('base.site_theme|raw') ?: 'default';
+        }else if (self::getUserType() == 'site'){
+            $default = static::getSite('site_theme', 'default') ?: 'default';
+        }
         return static::getUserData('site_theme', $default);
     }
 
@@ -177,22 +200,75 @@ class AdminService extends Service
      * 初始化站点信息
      * @return void
      */
-    public static function getSite(?string $field = null, $default = null){
-        $data = [];
-        if (Library::$sapp->session->get('user.usertype') == 'site'){
-            $data = SystemSite::mk()->cache('SystemSite')->where(['id' => Library::$sapp->session->get('user.site_id')])->findOrEmpty()->toArray();
+    public static function getSite($field = null, $default = null,$site_id = null){
+        $isApi = Library::$sapp->request->header('api-site-id') !== null;
+        if (is_null($site_id)){
+            $site_id = (int)sysvar('api_site_id')?:$site_id;
+            if (is_null($site_id) && $isApi){
+                if ( !($site_id = (int)Library::$sapp->request->header('api-site-id')) ){
+                    throw new HttpResponseException(json(['code' => 999, 'info' => '无效小程序', 'data' => []]));
+                }
+            }else if (is_null($site_id)){
+                if (Library::$sapp->session->get('user.usertype') == 'site'){
+                    if (!($site_id = (int)Library::$sapp->session->get('user.site_id'))){
+                        throw new HttpResponseException(json(['code' => 0, 'info' => '非法站点ID', 'data' => []]));
+                    }
+                }
+            }
         }
-        return $field ? ($data[$field]??$default) : $data;
+
+        /**
+         * cli  api 后端site 均走此端口
+         */
+        if (Library::$sapp->request->isCli() || $site_id || (self::isLogin() && self::getUserType() == 'site') ){
+            sysvar('api_site_id',$site_id?:0);
+
+            $siteCacheKey = md5(json_encode(['SystemSite',(int)$site_id],JSON_UNESCAPED_UNICODE));
+            $keys = md5(json_encode(['think.admin.config',(int)$site_id],JSON_UNESCAPED_UNICODE));
+
+            if (empty($config = sysvar( $keys  ) ?: [])) {
+                $siteInfo = SystemSite::mk()->cache($siteCacheKey)->where(['id' => $site_id])->hidden(['deleted','status','update_time','create_time'])->findOrEmpty();
+                foreach ($siteInfo->toArray() as $name  => $value ){
+                    $config[$name] = $value;
+                }
+                sysvar($keys, $config);
+            }
+
+            if (is_null($field)){
+                return $config;
+            }else if (is_string($field)){
+                $type = '';
+                if (stripos($field, '.') !== false) {
+                    [$type, $field] = explode('.', $field, 2);
+                    return $config[$type][$field]??$default;
+                }else{
+                    return $config[$field]??$default;
+                }
+            }else if (is_array($field)){
+                foreach ($config as $key => $vo) if (!in_array($key,$field))  unset($config[$key]);
+                return $config?:$default;
+            }
+        }
+
+        return $default;
     }
 
     /**
      * 设置站点
      * @param string $name
      * @param $value
-     * @return void
+     * @return bool
      */
     public static function setSite(string $name,$value = ''){
-        SystemSite::mk()->master()->where(['id' => Library::$sapp->session->get('user.site_id') ])->findOrEmpty()->save([$name => $value]);
+        if (Library::$sapp->request->header('api-site-id') !== null) $site_id = (int)Library::$sapp->request->header('api-site-id',0);
+        else $site_id = (int)Library::$sapp->session->get('user.site_id');
+        $siteCacheKey = md5(json_encode(['SystemSite',(int)$site_id],JSON_UNESCAPED_UNICODE));
+        $keys = md5(json_encode(['think.admin.config',(int)$site_id],JSON_UNESCAPED_UNICODE));
+        SystemSite::mk()->master()->where(['id' => (int)$site_id])->findOrEmpty()->save([$name => $value]);
+        sysvar($keys, []);
+        Library::$sapp->cache->delete($siteCacheKey);
+        return 1;
+
     }
     /**
      * 检查指定节点授权
@@ -202,8 +278,17 @@ class AdminService extends Service
     {
         $skey1 = 'think.admin.methods';
         $current = NodeService::fullNode($node);
-        $methods = sysvar($skey1) ?: sysvar($skey1, NodeService::getMethods());
+
+        $methods = sysvar($skey1) ?: sysvar($skey1, NodeService::getMethods(true));
         $userNodes = Library::$sapp->session->get('user.nodes', []);
+
+        // 站点权限过滤
+        $userType = Library::$sapp->session->get('user.usertype')?:'admin';
+        $checkSites = $methods[$current]['sites']??[];
+        if (count($checkSites) > 0 && !in_array($userType,$checkSites) ){
+            return false;
+        }
+
         // 自定义权限检查回调
         if (count(self::$checkCallables) > 0) {
             foreach (self::$checkCallables as $callable) {
@@ -218,8 +303,9 @@ class AdminService extends Service
         if (function_exists('admin_check_filter')) {
             return call_user_func('admin_check_filter', $current, $methods, $userNodes);
         }
+
         // 超级用户不需要检查权限
-        if (static::isSuper()) {
+        if (static::isSuper() || static::isSiteSuper()) {
             return true;
         }
         // 节点权限检查，需要兼容 windows 控制器不区分大小写，统一去除节点下划线再检查权限
@@ -243,6 +329,9 @@ class AdminService extends Service
         [$nodes, $pnodes, $methods] = [[], [], array_reverse(NodeService::getMethods())];
         foreach ($methods as $node => $method) {
             [$count, $pnode] = [substr_count($node, '/'), substr($node, 0, strripos($node, '/'))];
+           
+            if ($method['sites'] && !in_array(self::getUserType(), $method['sites'])) continue;
+
             if ($count === 2 && !empty($method['isauth'])) {
                 in_array($pnode, $pnodes) or array_push($pnodes, $pnode);
                 $nodes[$node] = ['node' => $node, 'title' => lang($method['title']), 'pnode' => $pnode, 'checked' => in_array($node, $checkeds)];
@@ -252,6 +341,7 @@ class AdminService extends Service
         }
         foreach (array_keys($nodes) as $key) {
             foreach ($methods as $node => $method) {
+
                 if (stripos($key, $node . '/') !== false) {
                     $pnode = substr($node, 0, strripos($node, '/'));
                     $nodes[$node] = ['node' => $node, 'title' => lang($method['title']), 'pnode' => $pnode, 'checked' => in_array($node, $checkeds)];
@@ -259,6 +349,8 @@ class AdminService extends Service
                 }
             }
         }
+
+
         return DataExtend::arr2tree(array_reverse($nodes), 'node', 'pnode', '_sub_');
     }
 
@@ -275,10 +367,10 @@ class AdminService extends Service
             return [];
         }
         $user = SystemUser::mk()->where(['id' => $uuid])->findOrEmpty()->toArray();
-        if (!static::isSuper() && count($aids = str2arr($user['authorize'])) > 0) {
-            $aids = SystemAuth::mk()->where(['status' => 1])->whereIn('id', $aids)->column('id');
+        if (!static::isSuper() && !static::isSiteSuper() && count($aids = str2arr($user['authorize'])) > 0) {
+            $aids = SystemAuth::mk()->where(['status' => 1,'site_id' => $user['site_id']])->whereIn('id', $aids)->column('id');
             if (!empty($aids)) {
-                $nodes = SystemNode::mk()->distinct()->whereIn('auth', $aids)->column('node');
+                $nodes = SystemNode::mk()->distinct()->where(['site_id' => $user['site_id']])->whereIn('auth', $aids)->column('node');
             }
         }
         $user['nodes'] = $nodes ?? [];

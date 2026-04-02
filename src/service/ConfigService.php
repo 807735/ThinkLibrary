@@ -27,13 +27,7 @@ use think\admin\Library;
  */
 abstract class ConfigService
 {
-
-    /**
-     * 配置缓存名
-     * @var string
-     */
-    private static $skey = 'plugin.base.config';
-    
+ 
     /**
      * 页面类型配置
      * @var string[]
@@ -65,6 +59,7 @@ abstract class ConfigService
             ['domain' => 'dev.rescue.com','isDev' => 1],
             ['domain' => 'help.zsh88.cn','isDev' => 1],
             ['domain' => 'rescue.zhenshihuishop.net','isDev' => 1],
+            ['domain' => 'www.dev.com','isDev' => 1],
         ];
     }
 
@@ -75,24 +70,11 @@ abstract class ConfigService
      * @return array|mixed|null
      * @throws \think\admin\Exception
      */
-    public static function get(?string $name = null, $default = null)
+    public static function get(?string $name = null, $default = null,$site_id=null)
     {
-        $syscfg = sysvar(self::$skey) ?: sysvar(self::$skey, sysdata(self::$skey));
-        if (empty($syscfg['base_domain'])) $syscfg['base_domain'] = sysconf('base.site_host') . '/h5';
-        return is_null($name) ? $syscfg : ($syscfg[$name] ?? $default);
+        return AdminService::getSite($name,$default,$site_id);
     }
 
-    /**
-     * 保存配置参数
-     * @param array $data
-     * @return mixed
-     * @throws \think\admin\Exception
-     */
-    public static function set(array $data)
-    {
-
-        return sysdata(self::$skey, $data);
-    }
 
     /**
      * 设置页面数据
@@ -103,7 +85,9 @@ abstract class ConfigService
      */
     public static function setPage(string $code, array $data)
     {
-        return sysdata("page.{$code}", $data);
+        $page = AdminService::getSite('pagecfg',[]);
+        $page[$code] = $data;
+        return AdminService::setSite('pagecfg',$page);
     }
 
     /**
@@ -114,6 +98,6 @@ abstract class ConfigService
      */
     public static function getPage(string $code): array
     {
-        return sysdata("page.{$code}");
+        return   AdminService::getSite('pagecfg',[])[$code]??[];
     }
 }

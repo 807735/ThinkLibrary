@@ -360,6 +360,7 @@ class SystemService extends Service
     public static function getOplog(string $action, string $content): array
     {
         return [
+            'site_id' => AdminService::getSite('id',0),
             'node' => NodeService::getCurrent(),
             'action' => lang($action), 'content' => lang($content),
             'geoip' => Library::$sapp->request->ip() ?: '127.0.0.1',

@@ -192,7 +192,12 @@ class NodeService extends Service
                 if (in_array($metname = $method->getName(), $ignoreNode)) {
                     continue;
                 }
-                $data[strtolower("{$prefix}/{$metname}")] = static::_parseComment($method->getDocComment() ?: '', $metname);
+                // 继承 类注释 数据
+                $subData = static::_parseComment($method->getDocComment() ?: '', $metname);
+                $subData['issite'] = intval($data[$prefix]['issite']);
+                $subData['sites'] = $data[$prefix]['sites']??[];
+
+                $data[strtolower("{$prefix}/{$metname}")] = $subData;
             }
         }
     }
@@ -206,12 +211,19 @@ class NodeService extends Service
     {
         $text = strtr($comment, "\n", ' ');
         $title = preg_replace('/^\/\*\s*\*\s*\*\s*(.*?)\s*\*.*?$/', '$1', $text);
-        if (in_array(substr($title, 0, 5), ['@auth', '@menu', '@logi'])) {
+        if (in_array(substr($title, 0, 5), ['@site','@auth', '@menu', '@logi'])) {
             $title = $default;
         }
+
+        $siteComment = preg_replace('/^\/\*\s*\*\s*\*\s*(.*?)\s*\*\s*@site\s*(.*?)\s*\*.*?$/', '${2}', $text);
+        $sites = [];
+        foreach (['admin','site'] as $k) if (stripos($siteComment,$k) !== false) $sites[] = $k;
+
         return [
             'title' => $title ?: $default,
+            'sites' => $sites,
             'isauth' => intval(preg_match('/@auth\s*true/i', $text)),
+            'issite' => intval(preg_match('/@site\s*true/i', $text)),
             'ismenu' => intval(preg_match('/@menu\s*true/i', $text)),
             'islogin' => intval(preg_match('/@login\s*true/i', $text)),
         ];

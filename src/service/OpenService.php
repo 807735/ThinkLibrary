@@ -73,7 +73,7 @@ class OpenService extends Service
      * @throws Exception
      */
     public function getConfig()
-    {
+    { 
         $config = AdminService::getSite('openapi');
         return [
             'site_id'           => AdminService::getSite('id',0),

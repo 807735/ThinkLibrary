@@ -102,17 +102,7 @@ class CodeExtend
      */
     public static function text2utf8(string $text, string $target = 'UTF-8'): string
     {
-        [$first2, $first4] = [substr($text, 0, 2), substr($text, 0, 4)];
-        if ($first4 === chr(0x00) . chr(0x00) . chr(0xFE) . chr(0xFF)) {
-            $ft = 'UTF-32BE';
-        } elseif ($first4 === chr(0xFF) . chr(0xFE) . chr(0x00) . chr(0x00)) {
-            $ft = 'UTF-32LE';
-        } elseif ($first2 === chr(0xFE) . chr(0xFF)) {
-            $ft = 'UTF-16BE';
-        } elseif ($first2 === chr(0xFF) . chr(0xFE)) {
-            $ft = 'UTF-16LE';
-        }
-        return mb_convert_encoding($text, $target, $ft ?? mb_detect_encoding($text));
+        return mb_convert_encoding($text, $target, self::detectEncoding($text));
     }
 
     /**
@@ -173,5 +163,25 @@ class CodeExtend
     public static function dezip(string $string)
     {
         return unserialize(gzuncompress(static::deSafe64($string)));
+    }
+    /**
+     * 尝试通过 BOM 判断文本编码。
+     */
+    private static function detectEncoding(string $text): string
+    {
+        [$first2, $first4] = [substr($text, 0, 2), substr($text, 0, 4)];
+        if ($first4 === chr(0x00) . chr(0x00) . chr(0xFE) . chr(0xFF)) {
+            return 'UTF-32BE';
+        }
+        if ($first4 === chr(0xFF) . chr(0xFE) . chr(0x00) . chr(0x00)) {
+            return 'UTF-32LE';
+        }
+        if ($first2 === chr(0xFE) . chr(0xFF)) {
+            return 'UTF-16BE';
+        }
+        if ($first2 === chr(0xFF) . chr(0xFE)) {
+            return 'UTF-16LE';
+        }
+        return mb_detect_encoding($text) ?: 'UTF-8';
     }
 }

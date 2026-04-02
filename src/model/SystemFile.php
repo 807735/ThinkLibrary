@@ -69,6 +69,13 @@ class SystemFile extends Model
     }
 
     /**
+     * 获取站点信息
+     * @return HasOne
+     */
+    public function site():HasOne{
+        return $this->hasOne(SystemSite::class,'id','site_id')->field('id,name');
+    }
+    /**
      * 格式化创建时间.
      * @param mixed $value
      */

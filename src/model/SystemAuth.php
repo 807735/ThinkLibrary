@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace think\admin\model;
 
 use think\admin\Model;
+use think\admin\service\AdminService;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
@@ -63,7 +64,7 @@ class SystemAuth extends Model
      */
     public static function items(): array
     {
-        return static::mk()->where(['status' => 1])->order('sort desc,id desc')->select()->toArray();
+        return static::mk()->where(['status' => 1,'site_id' => AdminService::getSite('id',0) ])->order('sort desc,id desc')->select()->toArray();
     }
 
     /**

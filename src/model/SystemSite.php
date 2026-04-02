@@ -17,6 +17,8 @@
 declare (strict_types=1);
 
 namespace think\admin\model;
+use app\data\model\DataConfigCompany;
+use app\service\model\ServiceAuth;
 use think\model\relation\HasOne;
 
 /**
@@ -30,44 +32,126 @@ class SystemSite extends Abs
         return $this->hasOne(SystemUser::class,'id','user_id');
     }
 
-    /**
-     * 字段属性处理
-     * @param mixed $value
-     * @return string
-     */
-    public function setOpenapiAttr($value): string
-    {
-        return is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE);
+    public function wechatAuth(){
+        return $this->hasOne(ServiceAuth::class,'site_id','id')->where(['deleted' => 0]);
     }
 
     /**
-     * 字段属性处理
-     * @param mixed $value
-     * @return array
-     */
-    public function getOpenapiAttr($value): array
-    {
-        return empty($value) ? [] : (is_string($value) ? json_decode($value, true) : $value);
-    }
-    /**
-     * 字段属性处理
-     * @param mixed $value
+     * 获取站点ID
      * @return string
      */
-    public function setSmscfgAttr($value): string
-    {
-        return is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE);
+    public function getSiteId(){
+        $prefix = date('Ymd');
+        $count = self::mk()->whereRaw("id like CONCAT('{$prefix}', '%')")->count()+1;
+        return $prefix . str_pad((string)$count, 4, "0", STR_PAD_LEFT);
     }
 
-    /**
-     * 字段属性处理
-     * @param mixed $value
-     * @return array
-     */
-    public function getSmscfgAttr($value): array
-    {
-        return empty($value) ? [] : (is_string($value) ? json_decode($value, true) : $value);
+
+    public function setOpenapiAttr($value): string   {
+        return $this->setExtraAttr($value);
     }
+
+    public function getOpenapiAttr($value): array   {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setSmscfgAttr($value): string  {
+        return $this->setExtraAttr($value);
+    }
+
+    public function getSmscfgAttr($value): array  {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setAgreementcfgAttr($value):string {
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getAgreementcfgAttr($value): array    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setOrdercfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getOrdercfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setAppcfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getAppcfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setPagecfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getPagecfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setMaterialcfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getMaterialcfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setContractcfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getContractcfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setAccountcfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getAccountcfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setMallapiAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getMallapiAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setExpressRegionNosAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getExpressRegionNosAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
+    public function setWechatcfgAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getWechatcfgAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+
 
 
 }

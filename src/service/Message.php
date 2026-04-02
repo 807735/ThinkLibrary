@@ -18,9 +18,7 @@ declare (strict_types=1);
 
 namespace think\admin\service;
 
-use app\manage\model\SystemMsms;
-
-use app\data\service\ConfigService;
+use think\admin\model\SystemMsms;
 use think\admin\contract\MessageInterface;
 use think\admin\Exception;
 use think\admin\Library;
@@ -156,7 +154,7 @@ abstract class Message
      */
     public static function getIdentifierCount(string $identifier,array $where = []): int
     {
-        return SystemMsms::mk()->where(['identifier' => $identifier])->where($where)->count();
+        return SystemMsms::mk()->where(['site_id' => AdminService::getSite('id',0),'identifier' => $identifier])->where($where)->count();
     }
     /**
      * 发送任务短信

@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace think\admin\model;
 
 use think\admin\Model;
+use think\model\relation\HasOne;
 
 /**
  * 系统日志模型.
@@ -47,5 +48,9 @@ class SystemOplog extends Model
     public function getCreateAtAttr($value): string
     {
         return format_datetime($value);
+    }
+
+    public function site():HasOne{
+        return $this->hasOne(SystemSite::class,'id','site_id')->field('id,name');
     }
 }

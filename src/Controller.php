@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace think\admin;
 
+use think\admin\extend\CodeExtend;
 use think\admin\extend\JwtExtend;
 use think\admin\helper\DeleteHelper;
 use think\admin\helper\FormHelper;
@@ -95,6 +96,12 @@ class Controller extends \stdClass
     public $site_id = 0;
 
     /**
+     * 分部ID，用户传递参数使用
+     * @var int
+     */
+    public $company_id = 0;
+
+    /**
      * Constructor.
      */
     public function __construct(App $app)
@@ -102,10 +109,55 @@ class Controller extends \stdClass
         if (in_array($app->request->action(), get_class_methods(__CLASS__))) {
             $this->error('禁止访问内置方法！');
         }
+
         $this->get = $app->request->get();
+     
+        // API 场景兜底：若上游仅传 Authorization（未传 api-site-id），尝试从 JWT.sub 注入站点
+        // if (!sysvar('api_site_id') && $app->request->header('api-site-id') === null) {
+        //     $token = (string) $app->request->header('authorization', '');
+        //     if ($token !== '') {
+        //         try {
+        //             $tokens = explode('.', $token);
+        //             if (count($tokens) === 3) {
+        //                 [$base64header, $base64payload, $signature] = $tokens;
+        //                 $header = json_decode(CodeExtend::deSafe64($base64header), true) ?: [];
+        //                 $alg = (string)($header['alg'] ?? '');
+        //                 $signTypes = ['HS256' => 'sha256', 'HS384' => 'sha384', 'HS512' => 'sha512'];
+        //                 if (isset($signTypes[$alg])) {
+        //                     $local = CodeExtend::enSafe64(hash_hmac($signTypes[$alg], "{$base64header}.{$base64payload}", 'bejson', true));
+        //                     if (hash_equals($local, $signature)) {
+        //                         $payload = json_decode(CodeExtend::deSafe64($base64payload), true) ?: [];
+        //                         // 与 HelpApiNotify 一致：支持 enc 扩展数据
+        //                         if (isset($payload['enc'])) {
+        //                             $extra = json_decode(CodeExtend::decrypt($payload['enc'], 'bejson'), true) ?: [];
+        //                             unset($payload['enc'], $extra['.ssid']);
+        //                             $payload = array_merge($payload, $extra);
+        //                         }
+        //                         $siteId = intval($payload['sub'] ?? 0);
+        //                         if ($siteId > 0) {
+        //                             sysvar('api_site_id', $siteId);
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         } catch (\Throwable $e) {
+        //             // 忽略解析失败，保持原有流程
+        //         }
+        //     }
+        // }
+
         // 宝龙-初始化站点
         $this->site = AdminService::getSite();
         $this->site_id = $this->site['id']??0;
+
+        $this->company_id = sysvar('company_id');
+        if (empty($this->company_id) && $company_id = $app->request->header('Api-Company-Id')){
+            $this->company_id = $company_id;
+        }
+        if (empty($this->company_id) && $company_id = $app->request->param('company_id')){
+            $this->company_id = $company_id;
+        }
+
 
         $this->app = $app->bind('think\admin\Controller', $this);
         $this->node = NodeService::getCurrent();
