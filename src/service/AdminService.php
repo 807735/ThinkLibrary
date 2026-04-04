@@ -227,12 +227,13 @@ class AdminService extends Service
             $keys = md5(json_encode(['think.admin.config',(int)$site_id],JSON_UNESCAPED_UNICODE));
 
             if (empty($config = sysvar( $keys  ) ?: [])) {
-                $siteInfo = SystemSite::mk()->cache($siteCacheKey)->where(['id' => $site_id])->hidden(['deleted','status','update_time','create_time'])->findOrEmpty();
+                $siteInfo = SystemSite::mk()->cache($siteCacheKey)->append(['expire'])->where(['id' => $site_id])->hidden(['deleted','status','update_time','create_time'])->findOrEmpty();
                 foreach ($siteInfo->toArray() as $name  => $value ){
                     $config[$name] = $value;
                 }
                 sysvar($keys, $config);
             }
+
 
             if (is_null($field)){
                 return $config;

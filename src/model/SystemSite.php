@@ -31,6 +31,19 @@ class SystemSite extends Abs
     public function user():HasOne{
         return $this->hasOne(SystemUser::class,'id','user_id');
     }
+//    public function getExpireTimeAttr($value): string
+//    {
+//        return format_datetime($value);
+//    }
+//    /**
+//     * 时间写入格式化
+//     * @param mixed $value
+//     * @return string
+//     */
+//    public function setExpireTimeAttr($value): string
+//    {
+//        return $this->setCreateTimeAttr($value);
+//    }
 
     public function wechatAuth(){
         return $this->hasOne(ServiceAuth::class,'site_id','id')->where(['deleted' => 0]);
@@ -46,6 +59,29 @@ class SystemSite extends Abs
         return $prefix . str_pad((string)$count, 4, "0", STR_PAD_LEFT);
     }
 
+    // 服务商到期 判断
+    public function getExpireAttr($value,$data){
+        $config = ['state' => 0,'admin_message' => '','app_message' => ''];
+        if ($data['expire_time']){
+            $expire_date = date('Y-m-d 23:59:59',strtotime($data['expire_time']));
+            $expire_time = strtotime($expire_date);
+            // 未到期，提前30天提醒
+            if ($expire_time > time() &&  ($expire_time - ( 30 * 86400 )  <   time()  )  ){
+                [$config['state'],$config['admin_message'],$config['app_message']] = [1,
+                    "服务商【{$data['name']}】将于{$expire_date}到期，请及时联系平台客服处理，到期后前端顾问以及商城无法访问！",
+                    "服务商【{$data['name']}】将于{$expire_date}到期",
+                ];
+            }
+            // 已到期提醒
+            if ($expire_time < time()){
+                [$config['state'],$config['admin_message'],$config['app_message']] = [2,
+                    "服务商【{$data['name']}】已经到期，前端顾问以及商城无法访问！",
+                    "服务商【{$data['name']}】已经到期！请联系管理员",
+                ];
+            }
+        }
+        return $config;
+    }
 
     public function setOpenapiAttr($value): string   {
         return $this->setExtraAttr($value);
