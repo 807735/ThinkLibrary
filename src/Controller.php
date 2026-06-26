@@ -114,15 +114,6 @@ class Controller extends \stdClass
         // 宝龙-初始化站点
         $this->site = AdminService::getSite();
         $this->site_id = $this->site['id']??0;
-        
-        $this->company_id = sysvar('company_id');
-        if (empty($this->company_id) && $company_id = $app->request->header('Api-Company-Id')){
-            $this->company_id = $company_id;
-        }
-        if (empty($this->company_id) && $company_id = $app->request->param('company_id')){
-            $this->company_id = $company_id;
-        }
-
 
         $this->app = $app->bind('think\admin\Controller', $this);
         $this->node = NodeService::getCurrent();

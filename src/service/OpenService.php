@@ -18,13 +18,14 @@ declare (strict_types=1);
 
 namespace think\admin\service;
  
+use app\data\model\DataConfigKemai;
 use app\data\model\DataFamily;
+use app\data\model\DataKemaiSync;
 use app\member\model\MemberUser;
+use app\member\model\MemberUserRelation;
 use OpenClient\Exceptions\InvalidArgumentException;
 use think\admin\Exception;
 use think\admin\extend\HttpExtend;
-use think\admin\model\SystemSncData;
-use think\admin\model\SystemConfigKemai;
 use think\admin\Service;
 use think\exception\HttpResponseException;
 
@@ -74,7 +75,7 @@ class OpenService extends Service
      */
     public function getConfig()
     { 
-        $config = AdminService::getSite('openapi');
+        $config = AdminService::getSite('extra.openapi',[]);
         return [
             'site_id'           => AdminService::getSite('id',0),
             'app_path'          => $config['app_path']??'',
@@ -86,22 +87,20 @@ class OpenService extends Service
     /**
      * @param $retailId
      * @param string $family_code
-     * @return SystemSncData
+     * @return DataKemaiSync
      * @throws Exception
      */
-    public function synRetail($order,string $family_code = ''): SystemSncData
+    public function synRetail($order,string $family_code = ''): DataKemaiSync
     {
         [$retail,$entry,$pays] = [$order['Retail'],$order['Entry'],$order['Pay']];
-
-        $config = SystemConfigKemai::mk()->where(['branch_id' => $retail['BranchId']])->findOrEmpty();
+        $config = DataConfigKemai::mk()->where(['branch_id' => $retail['BranchId']])->findOrEmpty();
         if ($config->isEmpty())   throw new Exception('下单门店不符合');
         if ($config->getAttr('status') == 0)   throw new Exception("门店【{$config['branch_name']}】未开通积分兑换功能");
         $ratio = $config['ratio'];
         if ($ratio == 0)  throw new Exception("未定义转换比率");
 
-
         // 获取同步数据是否存在
-        $injectionInfo = SystemSncData::mk()->where(['code' => $retail['Id']])->whereIn('status',[1,2,3])->findOrEmpty();
+        $injectionInfo = DataKemaiSync::mk()->where(['code' => $retail['Id']])->whereIn('status',[1,2,3])->findOrEmpty();
         if ($injectionInfo->isExists())  throw new Exception("单据[{$retail['Id']}]已被使用");
         // 单据类型
         if (!in_array($retail['SellWay'],['A','B'])) throw new Exception("单据类型错误");
@@ -139,9 +138,10 @@ class OpenService extends Service
              */
             if (empty($family_code)){
                 $family = MemberUser::mk()->alias('a')
-                    ->where(['idcard' => $retail['IdentityCardId']])
-                    ->join('data_family b',"a.family_code = b.code and b.status in (3,4,5) and b.cancel_status=0 and b.deleted_status = 0")
-                    ->field('b.code')->findOrEmpty();
+                    ->join('member_user b',"a.unid = b.id")
+                    ->join('data_family_list c',"a.family_code = c.code and c.status in (2,3,4) and  c.deleted = 0")
+                    ->where(['a.idcard' => $retail['IdentityCardId']])
+                    ->field('c.code')->findOrEmpty();
                 $family->isEmpty() && throw new Exception("用户并未绑定家庭组");
                 $family_code = $family->getAttr('code');
             }
@@ -150,18 +150,19 @@ class OpenService extends Service
             //===================== 获取对应的用户信息 =====================
             $starDate = $config['stardate']?:'2025-01-01'; // 科脉产生数据的起始日期
             // 获取当前家庭组内所有成员身份证
-            $member = MemberUser::mk()->alias('a')
-                ->join('data_family b',"a.family_code = b.code and b.status in (3,4,5) and b.cancel_status=0 and b.deleted_status = 0")
-                ->where(['a.family_code' => $family_code ,'idcard' => $retail['IdentityCardId'] ])
-                ->field('a.id,a.username,a.mobile,a.idcard,a.family_code,b.payment_time')->findOrEmpty();
+            $member = MemberUserRelation::mk()->alias('a')
+                ->join('member_user b',"a.unid = b.id")
+                ->join('data_family_list c',"a.family_id = c.id and c.status in (2,3,4) and  c.deleted = 0")
+                ->where(['a.family_code' => $family_code ,'b.idcard' => $retail['IdentityCardId'] ])
+                ->field('a.id,b.username,b.mobile,b.idcard,a.family_code,c.site_id,a.family_id,c.create_time')->findOrEmpty();
             if ($member->isEmpty()) throw new Exception("符合条件用户不存在");
 
             // 时间限制
-            $starDate = date('Y-m-d H:i:s',max(strtotime($member->getAttr('payment_time')),strtotime($starDate)));
+            $starDate = date('Y-m-d H:i:s',max(strtotime($member->getData('create_time')),strtotime($starDate)));
             if (strtotime($retail['OperDate']) < strtotime($starDate))  throw new Exception("订单小于限定时间");
 
         }else if ($retail['SellWay'] == 'B'){
-            $base = SystemSncData::mk()->where(['code' => $retail['VoucherId']])->whereIn('status',[1,2,3])->findOrEmpty();
+            $base = DataKemaiSync::mk()->where(['code' => $retail['VoucherId']])->whereIn('status',[1,2,3])->findOrEmpty();
             if ($base->isEmpty()) throw new Exception("退款对应的订单数据不存在");
             if (in_array($base->getAttr('status'),[1,2])) throw new Exception("退款对应的订单状态错误");
             // 获取已经发放的家庭
@@ -169,10 +170,19 @@ class OpenService extends Service
             $ratio = $extra['ratio'];
             $member = [
                 'id' => $extra['nuid'],
+                'site_id' => $extra['siteId'],
                 'family_code' => $extra['familyCode'],
+                'family_id' => $extra['familyId'],
                 'username' => $extra['username'],
                 'mobile' => $extra['mobile'],
             ];
+
+            // 兼容老数据
+            if (!isset($extra['entry'])){
+                [$state,$info,$res] = OpenService::OpenKm()->retail(['id' => $retail['VoucherId']]);
+                if ($state==0)  throw new Exception($info);
+                $extra['entry']=$res['Entry'];
+            }
             // 筛选 退款产品
             $entry = array_filter($entry,function ($v) use ($extra){
                 return in_array($v['ItemId'],array_column($extra['entry'],'ItemId'));
@@ -187,7 +197,9 @@ class OpenService extends Service
             'SellWay' => $retail['SellWay'],
             'BranchName' => $retail['BranchName']??'',
             'nuid' => $member['id']??'',
+            'siteId' => $member['site_id']??'',
             'familyCode' => $member['family_code']??'',
+            'familyId' => $member['family_id']??'',
             'username' => $member['username']??'',
             'mobile' => $member['mobile']??'',
             'ratio' => $ratio,
@@ -198,10 +210,13 @@ class OpenService extends Service
             'Amount' =>  round( (FLOAT)$SubAmt * $ratio ,4),
         ];
 
+        $data['site_id'] = $member['site_id']??'';
         $data['code'] = $retail['Id']??'';
         $data['family_code'] = $member['family_code']??'';
+        $data['family_id'] = $member['family_id']??'';
         $data['type'] = 'km';
         $data['way'] = ['A' => 0,'B' => 1][$retail['SellWay']]??0;
+
 
         // 创建单据
         [$state,$info,$res] = OpenService::OpenHelp()->create([

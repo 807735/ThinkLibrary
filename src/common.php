@@ -42,9 +42,9 @@ if (!function_exists('getSite')) {
      * @return null|array|mixed 返回内容
      * @return void
      */
-    function getSite(?string $name = null, $default = null)
+    function getSite(?string $name = null, $default = null,$site_id = null)
     {
-        return AdminService::getSite($name,$default);
+        return AdminService::getSite($name,$default,$site_id);
     }
 }
 

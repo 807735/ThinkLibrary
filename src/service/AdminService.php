@@ -89,7 +89,7 @@ class AdminService extends Service
      * @return void
      */
     public static function isSiteSuper():bool{
-        if (self::getUserType() == 'site' && self::getUserId() == self::getSite('user_id',0)){
+        if ( in_array(self::getUserType(),['site','coop']) && self::getUserId() == self::getSite('user_id',0)){
             return true;
         }
         return false;
@@ -155,7 +155,7 @@ class AdminService extends Service
     {
         if (self::getUserType() == 'admin'){
             $default = sysconf('base.site_theme|raw') ?: 'default';
-        }else if (self::getUserType() == 'site'){
+        }else if ( in_array(self::getUserType(),['site','coop']) ){
             $default = static::getSite('site_theme', 'default') ?: 'default';
         }
         return static::getUserData('site_theme', $default);
@@ -209,18 +209,17 @@ class AdminService extends Service
                     throw new HttpResponseException(json(['code' => 999, 'info' => '无效小程序', 'data' => []]));
                 }
             }else if (is_null($site_id)){
-                if (Library::$sapp->session->get('user.usertype') == 'site'){
+                if ( in_array(Library::$sapp->session->get('user.usertype'),['site','coop'])){
                     if (!($site_id = (int)Library::$sapp->session->get('user.site_id'))){
                         throw new HttpResponseException(json(['code' => 0, 'info' => '非法站点ID', 'data' => []]));
                     }
                 }
             }
         }
-
         /**
          * cli  api 后端site 均走此端口
          */
-        if (Library::$sapp->request->isCli() || $site_id || (self::isLogin() && self::getUserType() == 'site') ){
+        if (Library::$sapp->request->isCli() || $site_id || (self::isLogin() &&  in_array(self::getUserType(),['site','coop'])) ){
             sysvar('api_site_id',$site_id?:0);
 
             $siteCacheKey = md5(json_encode(['SystemSite',(int)$site_id],JSON_UNESCAPED_UNICODE));
@@ -240,8 +239,8 @@ class AdminService extends Service
             }else if (is_string($field)){
                 $type = '';
                 if (stripos($field, '.') !== false) {
-                    [$type, $field] = explode('.', $field, 2);
-                    return $config[$type][$field]??$default;
+                    foreach (explode('.', $field) as $f) $config = $config[$f]??false; 
+                    return $config?:$default;
                 }else{
                     return $config[$field]??$default;
                 }
@@ -281,14 +280,17 @@ class AdminService extends Service
         $current = NodeService::fullNode($node);
 
         $methods = sysvar($skey1) ?: sysvar($skey1, NodeService::getMethods(true));
+//        $methods =  sysvar($skey1, NodeService::getMethods(true));
         $userNodes = Library::$sapp->session->get('user.nodes', []);
 
-        // 站点权限过滤
+        // 商户权限过滤
         $userType = Library::$sapp->session->get('user.usertype')?:'admin';
         $checkSites = $methods[$current]['sites']??[];
+
         if (count($checkSites) > 0 && !in_array($userType,$checkSites) ){
             return false;
         }
+
 
         // 自定义权限检查回调
         if (count(self::$checkCallables) > 0) {
@@ -367,7 +369,7 @@ class AdminService extends Service
         if (($uuid = static::getUserId()) <= 0) {
             return [];
         }
-        $user = SystemUser::mk()->where(['id' => $uuid])->findOrEmpty()->toArray();
+        $user = SystemUser::mk()->where(['id' => $uuid])->findOrEmpty();
         if (!static::isSuper() && !static::isSiteSuper() && count($aids = str2arr($user['authorize'])) > 0) {
             $aids = SystemAuth::mk()->where(['status' => 1,'site_id' => $user['site_id']])->whereIn('id', $aids)->column('id');
             if (!empty($aids)) {
@@ -375,8 +377,8 @@ class AdminService extends Service
             }
         }
         $user['nodes'] = $nodes ?? [];
-        Library::$sapp->session->set('user', $user);
-        return $user;
+        Library::$sapp->session->set('user', $user->toArray());
+        return $user->toArray();
     }
 
     /**

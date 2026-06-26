@@ -177,6 +177,7 @@ class VirtualModel extends \stdClass implements StreamInterface
     public static function mk(string $name, array $data = [], string $conn = ''): Model
     {
         $type = strtolower($conn ?: 'default');
+
         if (!class_exists($class = "\\virtual\\model\\_{$type}\\{$name}")) {
             if (!in_array('model', stream_get_wrappers())) {
                 stream_wrapper_register('model', static::class);

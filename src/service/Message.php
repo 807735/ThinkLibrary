@@ -62,7 +62,7 @@ abstract class Message
      */
     public static function getScenes(): array
     {
-        $config = AdminService::getSite('smscfg',[]);
+        $config = AdminService::getSite('extra.smscfg',[]);
         $scenes = [];
         foreach (self::$scenes as $k => $v) {
             $v = array_merge($v, $config[$k] ?? []);
@@ -209,7 +209,17 @@ abstract class Message
         }
     }
 
+    /**
+     * 取消发送任务
+     * @return void
+     */
+    public static function clearTask($key,$remark='',?array $identifier=[]){
+        if (is_string($key)) $identifier[] = $key;
+        else if(is_array($key)) $identifier = $key;
 
+        SystemMsms::mk()->whereIn('identifier',$identifier)->where(['status' => 1])->update(['status' => 0,'send_remark' => $remark]);
+        return true;
+    }
     /**
      * 清理短信验证码
      * @param string $mobile

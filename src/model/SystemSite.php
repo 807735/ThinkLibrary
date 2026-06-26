@@ -31,22 +31,19 @@ class SystemSite extends Abs
     public function user():HasOne{
         return $this->hasOne(SystemUser::class,'id','user_id');
     }
-//    public function getExpireTimeAttr($value): string
-//    {
-//        return format_datetime($value);
-//    }
-//    /**
-//     * 时间写入格式化
-//     * @param mixed $value
-//     * @return string
-//     */
-//    public function setExpireTimeAttr($value): string
-//    {
-//        return $this->setCreateTimeAttr($value);
-//    }
+
 
     public function wechatAuth(){
         return $this->hasOne(ServiceAuth::class,'site_id','id')->where(['deleted' => 0]);
+    }
+    /**
+     * 关联身份权限.
+     */
+    public function type(): HasOne
+    {
+        return $this->hasOne(SystemBase::class, 'code', 'type')->where([
+            'type' => '身份权限', 'status' => 1, 'deleted' => 0,
+        ]);
     }
 
     /**
@@ -54,139 +51,158 @@ class SystemSite extends Abs
      * @return string
      */
     public function getSiteId(){
-        $prefix = date('Ymd');
-        $count = self::mk()->whereRaw("id like CONCAT('{$prefix}', '%')")->count()+1;
-        return $prefix . str_pad((string)$count, 4, "0", STR_PAD_LEFT);
+        do{
+            $prefix = date('Ymd');
+            $count = self::mk()->whereRaw("id like CONCAT('{$prefix}', '%')")->count()+1;
+            $id = $prefix . str_pad((string)$count, 4, "0", STR_PAD_LEFT);
+        }while(self::mk()->where('id',$id)->findOrEmpty()->isExists());
+        return $id;
     }
+
+    /**
+     * 获取mark标识
+     * @return array|int|string
+     */
+    public function getMark(){
+        do {
+            $letters = range('A', 'Z');
+            shuffle( $letters );
+            $mark = implode('',array_slice($letters, 0, 2));
+        }
+        while(self::mk()->where(['mark' => $mark])->findOrEmpty()->isExists());
+        return $mark;
+    }
+
 
     // 服务商到期 判断
     public function getExpireAttr($value,$data){
         $config = ['state' => 0,'admin_message' => '','app_message' => ''];
-        if ($data['expire_time']){
-            $expire_date = date('Y-m-d 23:59:59',strtotime($data['expire_time']));
-            $expire_time = strtotime($expire_date);
-            // 未到期，提前30天提醒
-            if ($expire_time > time() &&  ($expire_time - ( 30 * 86400 )  <   time()  )  ){
-                [$config['state'],$config['admin_message'],$config['app_message']] = [1,
-                    "服务商【{$data['name']}】将于{$expire_date}到期，请及时联系平台客服处理，到期后前端顾问以及商城无法访问！",
-                    "服务商【{$data['name']}】将于{$expire_date}到期",
-                ];
-            }
-            // 已到期提醒
-            if ($expire_time < time()){
-                [$config['state'],$config['admin_message'],$config['app_message']] = [2,
-                    "服务商【{$data['name']}】已经到期，前端顾问以及商城无法访问！",
-                    "服务商【{$data['name']}】已经到期！请联系管理员",
-                ];
-            }
-        }
+        // if ($data['expire_time']){
+        //     $expire_date = date('Y-m-d 23:59:59',strtotime($data['expire_time']));
+        //     $expire_time = strtotime($expire_date);
+        //     // 未到期，提前30天提醒
+        //     if ($expire_time > time() &&  ($expire_time - ( 30 * 86400 )  <   time()  )  ){
+        //         [$config['state'],$config['admin_message'],$config['app_message']] = [1,
+        //             "服务商【{$data['name']}】将于{$expire_date}到期，请及时联系平台客服处理，到期后前端顾问以及商城无法访问！",
+        //             "服务商【{$data['name']}】将于{$expire_date}到期",
+        //         ];
+        //     }
+        //     // 已到期提醒
+        //     if ($expire_time < time()){
+        //         [$config['state'],$config['admin_message'],$config['app_message']] = [2,
+        //             "服务商【{$data['name']}】已经到期，前端顾问以及商城无法访问！",
+        //             "服务商【{$data['name']}】已经到期！请联系管理员",
+        //         ];
+        //     }
+        // }
         return $config;
     }
 
-    public function setOpenapiAttr($value): string   {
+    public function setUserpageAttr($value):string{
+        return $this->setExtraAttr($value); ;
+    }
+
+    public function getUserpageAttr($value): array
+    {
+        return $this->getExtraAttr($value);
+    }
+ 
+    public function setAppThemeAttr($value): string   {
         return $this->setExtraAttr($value);
     }
-
-    public function getOpenapiAttr($value): array   {
+    public function getAppThemeAttr($value): array   {
         return $this->getExtraAttr($value);
     }
-
-    public function setSmscfgAttr($value): string  {
-        return $this->setExtraAttr($value);
-    }
-
-    public function getSmscfgAttr($value): array  {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setAgreementcfgAttr($value):string {
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getAgreementcfgAttr($value): array    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setOrdercfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getOrdercfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setAppcfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getAppcfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setPagecfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getPagecfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setMaterialcfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getMaterialcfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setContractcfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getContractcfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setAccountcfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getAccountcfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setMallapiAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getMallapiAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setExpressRegionNosAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getExpressRegionNosAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
-
-    public function setWechatcfgAttr($value):string{
-        return $this->setExtraAttr($value); ;
-    }
-
-    public function getWechatcfgAttr($value): array
-    {
-        return $this->getExtraAttr($value);
-    }
+//
+//    public function setSmscfgAttr($value): string  {
+//        return $this->setExtraAttr($value);
+//    }
+//
+//    public function getSmscfgAttr($value): array  {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setAgreementcfgAttr($value):string {
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getAgreementcfgAttr($value): array    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setOrdercfgAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getOrdercfgAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setAppcfgAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getAppcfgAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//
+//
+//    public function setMaterialcfgAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getMaterialcfgAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setContractcfgAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getContractcfgAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setAccountcfgAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getAccountcfgAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setMallapiAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getMallapiAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setExpressRegionNosAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getExpressRegionNosAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
+//
+//    public function setWechatcfgAttr($value):string{
+//        return $this->setExtraAttr($value); ;
+//    }
+//
+//    public function getWechatcfgAttr($value): array
+//    {
+//        return $this->getExtraAttr($value);
+//    }
 
 
 

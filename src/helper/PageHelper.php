@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace think\admin\helper;
 
+use app\admin\model\BaseExportFile;
+use app\admin\model\SystemExportFile;
 use think\admin\Helper;
 use think\admin\Library;
 use think\admin\service\AdminService;
@@ -51,6 +53,7 @@ class PageHelper extends Helper
      */
     public function init($dbQuery, $page = true, bool $display = true, $total = false, int $limit = 0, string $template = ''): array
     {
+
         $query = $this->autoSortQuery($dbQuery);
         if ($page !== false) {
             $get = $this->app->request->get();
@@ -87,6 +90,7 @@ class PageHelper extends Helper
         } else {
             $result = ['list' => $query->select()->toArray()];
         }
+
         if ($this->class->callback('_page_filter', $result['list'], $result) !== false && $display) {
             if ($this->output === 'get.json') {
                 $this->class->success('JSON-DATA', $result);
@@ -115,6 +119,44 @@ class PageHelper extends Helper
             }
             return PageHelper::instance()->init($query);
         }
+
+        if ($this->output === 'get.export') {
+            $fileparam = json_decode(input('get.__parameter'),true);
+            if (empty($fileparam))  throw new HttpResponseException(json(['code' => 0,'info' => '参数错误','data' => []]));
+            // 生成数据
+            $code = SystemExportFile::mk()->getCode();
+            $db = SystemExportFile::mk();
+            $db->save([
+                'code' => $code,
+                'fileparam' => input('get.__parameter'),
+                'filename' => input('get.__filename'),
+                'table_name' => $dbQuery->getTable(),
+                'model_class' => get_class($dbQuery->getModel()),
+                'controller_class' => get_class($this->class),
+                'controller_action' => $this->class->request->action(),
+                'model_options' => array_merge($dbQuery->getOptions(), [
+                    '_export_get' => $this->filterExportGet($this->app->request->get()),
+                ]),
+                'site_id' => sysvar('api_site_id'),
+                'user_id' => session('user.id'),
+                'username' => session('user.username'),
+                'login_ip' => $this->app->request->ip(),
+                'user_agent' => $this->app->request->server('HTTP_USER_AGENT'),
+            ]);
+            // 创建打包异步任务
+            $queueCode = sysqueue(
+                "【{$code}】数据自动打包任务",           // 任务标题
+                'data:export:pack',            // 执行命令
+                0,                        // 延时时间
+                ['code' => $code],        // 任务数据
+                1,                        // 允许重复创建
+                0                         // 是否循环执行
+            );
+            $db->where(['code' => $code])->save(['queue_code' =>  $queueCode]);
+            throw new HttpResponseException(json(['code' => 1,'info' => '打包任务已创建，请耐心等待','data' => []]));
+
+        }
+
         if ($this->output === 'get.layui.table') {
             $get = $this->app->request->get();
             $query = $this->autoSortQuery($dbQuery);
@@ -180,6 +222,19 @@ class PageHelper extends Helper
                 $item = htmlspecialchars($item, ENT_QUOTES);
             }
         }
+    }
+
+    /**
+     * 过滤导出任务需要回放的搜索参数
+     * @param array $get
+     * @return array
+     */
+    protected function filterExportGet(array $get): array
+    {
+        foreach (['output', 'export', '__parameter', '__filename', 'spm', 'not_cache_limit', 'page', 'limit', '_field_', '_order_'] as $key) {
+            unset($get[$key]);
+        }
+        return $get;
     }
 
     /**

@@ -52,13 +52,7 @@ abstract class ConfigService
 
     public static function myDomain():array{
         return [
-            ['domain' => 'help.pcnsos.com','isDev' => 0], // 正式版本地址
-            ['domain' => 'www.rescue.com','isDev' => 1],
-            ['domain' => '192.168.3.8','isDev' => 1],
-            ['domain' => '192.168.3.5','isDev' => 1],
-            ['domain' => 'dev.rescue.com','isDev' => 1],
-            ['domain' => 'help.zsh88.cn','isDev' => 1],
-            ['domain' => 'rescue.zhenshihuishop.net','isDev' => 1],
+            ['domain' => 'dev.zsh88.cn','isDev' => 1],
             ['domain' => 'www.dev.com','isDev' => 1],
         ];
     }
@@ -75,21 +69,7 @@ abstract class ConfigService
         return AdminService::getSite($name,$default,$site_id);
     }
 
-
-    /**
-     * 设置页面数据
-     * @param string $code 页面编码
-     * @param array $data 页面内容
-     * @return mixed
-     * @throws \think\admin\Exception
-     */
-    public static function setPage(string $code, array $data)
-    {
-        $page = AdminService::getSite('pagecfg',[]);
-        $page[$code] = $data;
-        return AdminService::setSite('pagecfg',$page);
-    }
-
+ 
     /**
      * 获取页面内容
      * @param string $code

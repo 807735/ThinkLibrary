@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace think\admin\helper;
 
+use app\admin\model\BaseExportFile;
 use think\admin\Helper;
 use think\admin\service\SystemService;
 use think\Container;
@@ -28,6 +29,7 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
 use think\db\Query;
+use think\exception\HttpResponseException;
 use think\Model;
 
 /**
@@ -316,11 +318,12 @@ class QueryHelper extends Helper
      */
     public function layTable(?callable $befor = null, ?callable $after = null, string $template = '')
     {
-        if (in_array($this->output, ['get.json', 'get.layui.table'])) {
+
+        if (in_array($this->output, ['get.json', 'get.layui.table','get.export'])) {
             if (is_callable($after)) {
                 call_user_func($after, $this, $this->query);
             }
-            $this->page->layTable($this->query, $template);
+            $this->page->layTable($this->query, $template); 
         } else {
             if (is_callable($befor)) {
                 call_user_func($befor, $this, $this->query);

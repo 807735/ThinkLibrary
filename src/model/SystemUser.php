@@ -86,6 +86,9 @@ class SystemUser extends Model
         return $query->column($fields, 'id');
     }
 
+    public function site():HasOne{
+        return $this->hasOne(SystemSite::class,'id','site_id');
+    }
     /**
      * 关联身份权限.
      */

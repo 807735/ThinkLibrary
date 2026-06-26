@@ -19,6 +19,7 @@ declare (strict_types=1);
 namespace think\admin\model;
 
 use think\admin\Model;
+use think\model\relation\HasOne;
 
 /**
  * 模型抽象类
@@ -27,7 +28,13 @@ use think\admin\Model;
  */
 abstract class Abs extends Model
 {
+    public function site():HasOne{
+        return $this->hasOne(SystemSite::class,'id','site_id');
+    }
 
+    public function formSite():HasOne{
+        return $this->hasOne(SystemSite::class,'id','form_site_id');
+    }
     /**
      * 格式化输出时间
      * @param mixed $value
@@ -86,5 +93,26 @@ abstract class Abs extends Model
     public function getExtraAttr($value): array
     {
         return empty($value) ? [] : (is_string($value) ? json_decode($value, true) : $value);
+    }
+
+    public function setAuditRemarkAttr($value)
+    {
+        [$flow,$user,$audit_time] = [$this->getAttr('audit_flow'),session('user'),date('Y-m-d H:i:s')];
+        array_unshift($flow, [
+            'audit_userid' => $user['id']??'0',
+            'audit_user' => $user['username']??'',
+            'audit_name' => $user['nickname'],
+            'audit_time' => $audit_time,
+            'audit_remark' => $value,
+        ]);
+        $this->set('audit_user', $user['username']??''  );
+        $this->set('audit_time', $audit_time  );
+        $this->set('audit_flow', $this->setExtraAttr($flow)  );
+        return $value;
+    }
+
+    public function getAuditFlowAttr($value): array
+    {
+        return $this->getExtraAttr($value);
     }
 }
